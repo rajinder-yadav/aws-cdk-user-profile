@@ -17,7 +17,7 @@ const envSchema = z.object({
 const env = envSchema.parse(process.env);
 
 // Define user profile schema with Zod
-const userProfileSchema = z.object({
+const createUserProfileSchema = z.object({
   userId: z.string().min(1).max(100),
   email: z.string().email(),
   firstName: z.string().min(1).max(100),
@@ -26,12 +26,11 @@ const userProfileSchema = z.object({
   createdAt: z.string().datetime().optional(),
   updatedAt: z.string().datetime().optional(),
 });
+// type CreateUserProfile = z.infer<typeof createUserProfileSchema>;
 
 // Define partial schema for updates (all fields optional)
-const userProfileUpdateSchema = userProfileSchema.partial();
-
-// UserProfile type is defined but not directly used since we work with the schema directly
-// type UserProfile = z.infer<typeof userProfileSchema>;
+const updateUserProfileSchema = createUserProfileSchema.partial();
+// type UpdateUserProfile = z.infer<typeof updateUserProfileSchema>;
 
 // Define API Gateway event types
 interface APIGatewayEvent {
@@ -55,7 +54,7 @@ export const handler = async (event: APIGatewayEvent) => {
 
   try {
     // Validate the event structure to prevent 502 errors
-    if (!event || !event.httpMethod || !event.path) {
+    if (!event?.httpMethod || !event.path) {
       console.error('Invalid event structure received:', event);
       return createResponse(500, {
         error: 'Invalid event structure',
@@ -121,7 +120,7 @@ const createUser = async (event: APIGatewayEvent) => {
     }
 
     // Validate the input against the schema
-    const validatedData = userProfileSchema.parse({
+    const validatedData = createUserProfileSchema.parse({
       ...requestBody,
       userId: requestBody.userId || generateUserId(), // Generate if not provided
       createdAt: new Date().toISOString(),
@@ -227,7 +226,7 @@ const updateUser = async (userId: string, event: APIGatewayEvent) => {
     }
 
     // Validate the input against the update schema (partial)
-    const validatedData = userProfileUpdateSchema.parse({
+    const validatedData = updateUserProfileSchema.parse({
       ...requestBody,
       userId,
       updatedAt: new Date().toISOString(),
