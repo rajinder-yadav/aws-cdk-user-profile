@@ -1,4 +1,55 @@
-# API Testing Guide for User Profile Management System
+## Infra as Code using AWS CDK in TypeScrip
+
+This code example shows how to building a AWS REST API Gateway that called a fat Lambda function to handled the following CRUD operations:
+
+- Create User profile
+- Update User profile
+- Delete User profile
+- Fetch User profile
+- List all User profiles
+
+The code also shows how to use AWS Mock for writing Unit Tests to test all the CRUD endpoints.
+
+Note: A "fat" Lambda function one that simplies handles all the CRUD operation. The alternative design is coding up multiple Lambda functions, one for each operation. There is no hard and fast rule for this, and the design choice is left to the user as an exercise.
+
+## Build the project
+
+To build and run the Unit test, type the following in a terminal:
+
+```sh
+npm run test
+```
+
+To lint the source code:
+
+```sh
+npm run lint
+```
+
+To deploy using AWS:
+
+```sh
+cdk synth
+cdk deploy
+```
+
+To tear down the AWS infra:
+
+```sh
+cdk destroy
+```
+
+## Testing the AWS service
+
+You can test all the API endpoints using the simple JavaScript program in the project root called, "test-apis.js".
+
+```sh
+API_URL=<aws-https-endpoint> node ./test-apis.js
+```
+
+You can find the "aws-https-endpoint" in the terminal after deploying the code to AWS.
+
+## API Testing Guide for User Profile Management System
 
 This guide provides instructions on how to test all the APIs in the User Profile Management System that was deployed using AWS CDK.
 
