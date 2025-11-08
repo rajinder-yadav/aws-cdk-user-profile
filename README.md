@@ -1,4 +1,4 @@
-## Infra as Code using AWS CDK in TypeScrip
+# Infra as Code using AWS CDK in TypeScript
 
 This code example shows how to building a AWS REST API Gateway that called a fat Lambda function to handled the following CRUD operations:
 
