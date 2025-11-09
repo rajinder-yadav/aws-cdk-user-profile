@@ -17,7 +17,7 @@ const envSchema = z.object({
 const env = envSchema.parse(process.env);
 
 // Define user profile schema with Zod
-const createUserProfileSchema = z.object({
+const CreateUserProfileSchema = z.object({
   userId: z.string().min(1).max(100),
   email: z.string().email(),
   firstName: z.string().min(1).max(100),
@@ -26,11 +26,11 @@ const createUserProfileSchema = z.object({
   createdAt: z.string().datetime().optional(),
   updatedAt: z.string().datetime().optional(),
 });
-// type CreateUserProfile = z.infer<typeof createUserProfileSchema>;
+// type CreateUserProfileDto = z.infer<typeof CreateUserProfileSchema>;
 
 // Define partial schema for updates (all fields optional)
-const updateUserProfileSchema = createUserProfileSchema.partial();
-// type UpdateUserProfile = z.infer<typeof updateUserProfileSchema>;
+const UpdateUserProfileSchema = CreateUserProfileSchema.partial();
+// type UpdateUserProfileDto = z.infer<typeof UpdateUserProfileSchema>;
 
 // Define API Gateway event types
 interface APIGatewayEvent {
@@ -110,22 +110,14 @@ export const handler = async (event: APIGatewayEvent) => {
 const createUser = async (event: APIGatewayEvent) => {
   try {
     // Parse and validate the request body
-    let requestBody: Record<string, unknown> = {};
-    if (event.body) {
-      try {
-        requestBody = typeof event.body === 'string' ? JSON.parse(event.body) : event.body;
-      } catch {
-        return createResponse(400, { error: 'Invalid JSON in request body' });
-      }
-    }
-
+    const requestBody = CreateUserProfileSchema.parse(JSON.parse(event.body || '{}'));
     // Validate the input against the schema
-    const validatedData = createUserProfileSchema.parse({
+    const validatedData = {
       ...requestBody,
       userId: requestBody.userId || generateUserId(), // Generate if not provided
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-    });
+    };
 
     // Check if user already exists
     const existingUser = await docClient.send(
@@ -150,7 +142,7 @@ const createUser = async (event: APIGatewayEvent) => {
     return createResponse(201, { message: 'User created successfully', user: validatedData });
   } catch (error: unknown) {
     if (error instanceof z.ZodError) {
-      return createResponse(400, { error: 'Validation failed', details: error.errors });
+      return createResponse(400, { error: 'Validation failed' });
     }
     const errorMessage = error instanceof Error ? error.message : 'Request body validation failed';
     return createResponse(400, {
@@ -158,6 +150,7 @@ const createUser = async (event: APIGatewayEvent) => {
       details: errorMessage
     });
   }
+
 };
 
 // Get a specific user
@@ -211,22 +204,15 @@ const listUsers = async () => {
 
 // Update a specific user
 const updateUser = async (userId: string, event: APIGatewayEvent) => {
+
   try {
     // Validate userId format
     z.string().min(1).parse(userId);
 
     // Parse and validate the request body
-    let requestBody: Record<string, unknown> = {};
-    if (event.body) {
-      try {
-        requestBody = typeof event.body === 'string' ? JSON.parse(event.body) : event.body;
-      } catch {
-        return createResponse(400, { error: 'Invalid JSON in request body' });
-      }
-    }
-
+    const requestBody = UpdateUserProfileSchema.parse(JSON.parse(event.body || '{}'));
     // Validate the input against the update schema (partial)
-    const validatedData = updateUserProfileSchema.parse({
+    const validatedData = UpdateUserProfileSchema.parse({
       ...requestBody,
       userId,
       updatedAt: new Date().toISOString(),
@@ -279,14 +265,16 @@ const updateUser = async (userId: string, event: APIGatewayEvent) => {
     return createResponse(200, { message: 'User updated successfully', userId });
   } catch (error: unknown) {
     if (error instanceof z.ZodError) {
-      return createResponse(400, { error: 'Validation failed', details: error.errors });
+      return createResponse(400, { error: 'Validation failed' });
     }
+
     const errorMessage = error instanceof Error ? error.message : 'Request body validation failed';
     return createResponse(400, {
       error: 'Invalid request body',
       details: errorMessage
     });
   }
+
 };
 
 // Delete a specific user
